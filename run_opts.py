@@ -132,6 +132,8 @@ if __name__ == '__main__':
         'VAL': []
     }
 
+    res_names = [x for x in lengths.keys()]
+
     unv = mda.Universe('example_peptide.pdb')
 
     for x in range(20):
@@ -142,9 +144,9 @@ if __name__ == '__main__':
         length1 = opt_geometry(step2)
         length2 = opt_geometry(step2)
 
-        lengths[unv.residues[x].name] += [length0]
-        lengths[unv.residues[x].name] += [length1]
-        lengths[unv.residues[x].name] += [length2]
+        lengths[res_names[x]] += [length0]
+        lengths[res_names[x]] += [length1]
+        lengths[res_names[x]] += [length2]
 
     with open('results', 'w+') as output:
         for k in lengths:
