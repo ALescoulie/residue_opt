@@ -71,7 +71,7 @@ def protonate_backbone(resid: mda.AtomGroup, length: float = 1.128) -> mda.Unive
     protonated.atoms.positions = np.row_stack((new_pos, h_pos))
     return protonated
 
-def opt_geometry(system: mda.Universe, key: int, basis: str = 'scf/cc-pvdz') -> float:
+def opt_geometry(system: mda.Universe, basis: str = 'scf/cc-pvdz') -> float:
     resid: mda.AtomGroup = system.select_atoms('all')
     rd_mol: Chem.Mol = atomgroup_to_mol(resid)
     coords: str = f'{Chem.GetFormalCharge(rd_mol)} {get_spin_multiplicity(rd_mol)}'
@@ -84,20 +84,20 @@ def opt_geometry(system: mda.Universe, key: int, basis: str = 'scf/cc-pvdz') -> 
         elif atom.name == 'CA':
             ca_ind = n
 
-        mol: psi4.core.Molecule = psi4.geometry(coords)
-        psi4.set_memory('48GB')
-        psi4.set_num_threads(12)
-        psi4.set_output_file
-        psi4.set_options({'reference': 'rhf', 'freeze_core': 'true'})
-        try:
-            psi4.optimize(basis, freeze_list=freeze_list, opt_cooridnates='cartesian',  molecule=mol)
-        except psi4.PsiException:
-            return None
+    mol: psi4.core.Molecule = psi4.geometry(coords)
+    psi4.set_memory('48GB')
+    psi4.set_num_threads(12)
+    psi4.set_output_file
+    psi4.set_options({'reference': 'rhf', 'freeze_core': 'true'})
+    try:
+        psi4.optimize(basis, freeze_list=freeze_list, opt_cooridnates='cartesian',  molecule=mol)
+    except psi4.PsiException:
+        return None
 
-        opt_coords = mol.create_psi4_string_from_molecule()
+    opt_coords = mol.create_psi4_string_from_molecule()
 
     for line in opt_coords:
-        if 'H' in line:
+        if 'H*' in line:
             line = line.split()
             h_coord = [float(line[1]), float(line[2]), float(line[3])]
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     unv = mda.Universe('example_peptide.pdb')
 
-    for x in enumerate(unv.residues):
+    for x in range(20):
         step0 = unv.select_atoms(f'resid {x + 1}')
         step1 = fix_amino(step0)
         step2 = protonate_backbone(step1)
