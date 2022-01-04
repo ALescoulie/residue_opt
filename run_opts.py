@@ -81,7 +81,7 @@ def opt_geometry(system: mda.Universe, basis: str = 'scf/cc-pvdz') -> float:
         coords += f'\n{atom.name[0]} {atom.position[0]} {atom.position[1]} {atom.position[2]}'
         if atom.name != 'H*':
             freeze_list += f'\n{n + 1} xyz'
-        elif atom.name == 'CA':
+        if atom.name == 'CA':
             ca_ind = n
 
     mol: psi4.core.Molecule = psi4.geometry(coords)
