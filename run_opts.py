@@ -10,9 +10,6 @@ import psi4
 
 from rdkit import Chem
 
-from pdbfixer import PDBFixer
-from simtk.openmm.app import PDBFile
-
 
 def get_spin_multiplicity(molecule: Chem.Mol) -> int:
     """Returns the spin multiplicity of a :class:`RDKit.Mol`.
@@ -30,20 +27,6 @@ def get_spin_multiplicity(molecule: Chem.Mol) -> int:
     total_spin: int = radical_electrons // 2
     spin_mult: int = total_spin + 1
     return spin_mult
-
-
-def fix_amino(resid: mda.AtomGroup) -> mda.AtomGroup:
-    resid.write('resid.pdb', file_format='PDB')  # Saving residue
-    fixer = PDBFixer(filename='resid.pdb')
-    fixer.findMissingResidues()
-    fixer.findMissingAtoms()
-    fixer.addMissingHydrogens(7)  # Adding protons at pH value
-    PDBFile.writeFile(fixer.topology, fixer.positions, open('resid_fixed.pdb', 'w'))
-
-    res_fixed = mda.Universe('resid_fixed.pdb')
-    resid: mda.AtomGroup = res_fixed.select_atoms("resname *")
-    resid.guess_bonds()
-    return resid
 
 def get_new_pos(backbone: mda.AtomGroup, length: float):
     c_pos = backbone.select_atoms('name C').positions[0]
@@ -138,22 +121,19 @@ if __name__ == '__main__':
 
     res_names = [x for x in lengths.keys()]
 
-    unv = mda.Universe('example_peptide.pdb')
-
-    for x in range(20):
-        step0 = unv.select_atoms(f'resid {x + 1}')
-        step1 = fix_amino(step0)
-        step2 = protonate_backbone(step1)
-        length0 = opt_geometry(step2)
-        length1 = opt_geometry(step2)
-        length2 = opt_geometry(step2)
-
-        lengths[res_names[x]] += [length0]
-        lengths[res_names[x]] += [length1]
-        lengths[res_names[x]] += [length2]
-
     with open('results', 'w+') as output:
-        for k in lengths:
-            output.write(f'{k}, {list_avg(lengths[k])}\n')
+        for n in res_names:
+            U = mda.Universe(f'{n}.pdb')
+            step0 = U.select_atoms('all')
+            step1 = protonate_backbone(step0)
+            length0 = opt_geometry(step1)
+            length1 = opt_geometry(step1)
+            length2 = opt_geometry(step1)
+
+            lengths[n] += [length0]
+            lengths[n] += [length1]
+            lengths[n] += [length2]
+
+            output.write(f'{n}, {list_avg(lengths[n])}\n')
 
     print(0)
