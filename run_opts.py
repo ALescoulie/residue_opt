@@ -61,23 +61,23 @@ def opt_geometry(system: mda.Universe, basis: str = 'scf/cc-pvdz') -> float:
     freeze_list: str = ''
     for n in range(len(system.atoms)):
         atom = system.atoms[n]
-        coords += f'\n{atom.name[0]} {atom.position[0]} {atom.position[1]} {atom.position[2]}'
+        coords += f'\n{atom.element} {atom.position[0]} {atom.position[1]} {atom.position[2]}'
         if atom.name != 'H*':
-            h_ind = n
             freeze_list += f'\n{n + 1} xyz'
+        else:
+            h_ind = n
         if atom.name == 'C':
             c_ind = n
+    
+    coords += '\nunits angstrom'
 
     mol: psi4.core.Molecule = psi4.geometry(coords)
     psi4.set_memory('48GB')
     psi4.set_num_threads(12)
     psi4.set_output_file
     psi4.set_options({'reference': 'rhf', 'freeze_core': 'true'})
-    try:
-        psi4.optimize(basis, freeze_list=freeze_list, opt_cooridnates='cartesian',  molecule=mol)
-    except psi4.PsiException:
-        return None
-
+    psi4.optimize(basis, freeze_list=freeze_list, opt_cooridnates='cartesian',  molecule=mol)
+   
     opt_coords = mol.create_psi4_string_from_molecule()
     opt_coords = opt_coords.split('\n')[4:]
 
